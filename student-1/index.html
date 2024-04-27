@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Donut Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js" charset="utf-8"></script>
+  </head>
+
+  <body>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: rgb(254, 251, 255);
+      }
+
+      #student-details {
+        border: 1px solid black;
+        padding: 3px;
+        background-color: antiquewhite;
+      }
+      #container {
+        display: grid;
+        grid-template-columns: 1fr 2fr; /* 1:2 ratio */
+        grid-column-gap: 20px;
+      }
+      #write-up {
+        padding: 15px;
+      }
+      #write-up h2 {
+        color: green;
+      }
+      .no-data-text {
+        font-size: 48px;
+        color: brown;
+      }
+    </style>
+
+    <section id="student-details">
+      <p>Name:- James, Chiedozie James Student ID:- d3458961</p>
+    </section>
+    <nav><a href="/">Back</a></nav>
+    <section id="graph-1">
+      Graph stuff in here...What is the area of interest/question the graph is
+      addressing..
+    </section>
+    <section id="container">
+      <div id="write-up">
+        <h2>Chart Description</h2>
+        <p>
+          This Donut Chart was created using d3(Data-Driven Documents). The
+          chart shows the operating profit for all regions within the dataset.
+        </p>
+        <p>
+          the donut chart is created using three columns from the Adidas Sales
+          dataset: Region, Operating_Profit, and Year. The operating profit for
+          each region is summed up, and the dataset is filtered based on the
+          selected year, rendering the operating profit for each region for that
+          specific year. This approach provides a focused visualization of how
+          operating profits are distributed across regions over time, allowing
+          users to explore the data interactively by selecting different years.
+        </p>
+        <h2>Regional Operating Profit Dynamics Over Time.</h2>
+        <ol>
+          <li>Regional Performance:</li>
+          <li>Yearly Trends:</li>
+          <li>Regional Disparities:</li>
+          <li>Seasonal Patterns:</li>
+          <li>Performance Analysis:</li>
+        </ol>
+        <p>
+          Overall, this visual gives a comprehensive understanding of operating
+          profit dynamics across different regions and over time, facilitating
+          strategic decision-making and performance evaluation.
+        </p>
+      </div>
+      <svg id="chart"></svg>
+    </section>
+
+    <script>
+      // Set up dimensions
+      const margin = { top: 50, right: 30, bottom: 30, left: 40 };
+      const width = 800;
+      const height = 600;
+      const radius = Math.min(width, height) / 2;
+
+      // Create SVG
+      const svg = d3
+        .select("#chart") // Select the existing SVG element by its ID
+        .attr("width", width)
+        .attr("height", height)
+        .style("border", "1px solid black")
+        .style("padding-right", "50px")
+        .append("g")
+        .attr("transform", `translate(${width / 2},${height / 2})`);
+
+      d3.json("donutchart.json")
+        .then(buildPieChart)
+        .catch(function (error) {
+          d3.select(".error")
+            .style("visibility", "visible")
+            .text("There was an error fetching the data");
+        });
+
+      // Define the updatePieChart function
+      function updatePieChart(data) {
+        // Remove existing chart elements
+        svg.selectAll(".slice").remove();
+        svg.selectAll(".legend").remove();
+        svg.selectAll(".tooltip").remove();
+        svg.selectAll(".no-data-text").remove();
+
+        if (data.length === 0) {
+          // Add animation delay before showing "No data received" text
+          setTimeout(() => {
+            svg
+              .append("text")
+              .attr("class", "no-data-text")
+              .attr("x", 0)
+              .attr("y", 0)
+              .attr("text-anchor", "middle")
+              .attr("dominant-baseline", "middle")
+              .style("font-size", "32px")
+              .text("No data received");
+          }, 1500); // Adjust the delay time here (in milliseconds)
+          return;
+        }
+
+        // Aggregate data by region
+        const aggregatedData = d3.rollup(
+          data,
+          (v) => d3.sum(v, (d) => d["Operating Profit"]),
+          (d) => d.Region
+        );
+
+        // Convert aggregated data to array of objects
+        const pieData = Array.from(aggregatedData, ([key, value]) => ({
+          region: key,
+          profit: value,
+        }));
+
+        // Define pie generator
+        const pie = d3
+          .pie()
+          .value((d) => d.profit)
+          .sort(null);
+
+        // Define arc generator
+        const arc = d3
+          .arc()
+          .innerRadius(radius * 0.5)
+          .outerRadius(radius * 0.8);
+
+        // Create pie chart slices
+        const slices = svg
+          .selectAll(".slice")
+          .data(pie(pieData))
+          .enter()
+          .append("g")
+          .attr("class", "slice")
+          .on("mouseover", handleMouseOver)
+          .on("mouseout", handleMouseOut);
+
+        // Append paths for slices
+        slices
+          .append("path")
+          .attr("d", arc)
+          .attr("fill", (d, i) => d3.schemeCategory10[i])
+          .style("opacity", 1) // Initially set opacity to 1 for all slices
+          .transition()
+          .duration(500) // Transition duration
+          .delay((d, i) => i * 500) // Delay based on index
+          .attrTween("d", function (d) {
+            var interpolate = d3.interpolate(d.startAngle, d.endAngle);
+            return function (t) {
+              d.endAngle = interpolate(t);
+              return arc(d);
+            };
+          });
+
+        // Add title
+        svg
+          .append("text")
+          .attr("x", width / 40)
+          .attr("y", -margin.top * 5.3)
+          .attr("text-anchor", "middle")
+          .style("font-size", "32px")
+          .text("Operating Profit For All Regions")
+          .style("fill", "orange");
+
+        // Create legend
+        const legend = svg
+          .append("g")
+          .attr("class", "legend")
+          .attr(
+            "transform",
+            `translate(${width / 150 + radius + 1},${height / 4 - radius})`
+          );
+
+        // Append legend items
+        const legendItems = legend
+          .selectAll(".legend-item")
+          .data(pieData)
+          .enter()
+          .append("g")
+          .attr("class", "legend-item")
+          .attr("transform", (d, i) => `translate(0, ${i * 20})`);
+
+        legendItems
+          .append("circle")
+          .attr("cx", 0)
+          .attr("cy", 0)
+          .attr("r", 5)
+          .attr("fill", (d, i) => d3.schemeCategory10[i]);
+
+        legendItems
+          .append("text")
+          .attr("x", 20)
+          .attr("y", 0)
+          .attr("dy", ".35em")
+          .style("text-anchor", "start")
+          .text((d) => d.region)
+          .style("fill", (d, i) => d3.schemeCategory10[i]);
+
+        // Tooltip
+        const tooltip = d3
+          .select("body")
+          .append("div")
+          .attr("class", "tooltip") // Add a class for easy selection and removal
+          .style("position", "absolute")
+          .style("background-color", "#e0e0e0")
+          .style("padding", "20px")
+          .style("border", "1px solid #ddd")
+          .style("border-radius", "5px")
+          .style("visibility", "hidden");
+
+        function handleMouseOver(event, d) {
+          const currentSlice = d3.select(this);
+          const others = svg.selectAll(".slice").filter((e) => e !== d);
+
+          // Reduce opacity of other slices
+          others.style("opacity", 0.5);
+
+          // Highlight current slice
+          currentSlice.style("opacity", 1);
+
+          // Show tooltip
+          const percentage =
+            ((d.data.profit / d3.sum(pieData, (d) => d.profit)) * 100).toFixed(
+              2
+            ) + "%";
+          const totalAmount = "$" + d.data.profit.toLocaleString();
+          tooltip
+            .html(
+              `<strong>${d.data.region} Region</strong><br>Percentage: ${percentage}<br>Total Amount: ${totalAmount}`
+            )
+            .style("top", event.pageY + "px")
+            .style("left", event.pageX + "px")
+            .style("visibility", "visible");
+        }
+
+        function handleMouseOut() {
+          // Restore opacity of all slices
+          svg.selectAll(".slice").style("opacity", 1);
+
+          // Hide tooltip
+          tooltip.style("visibility", "hidden");
+        }
+      }
+
+      // Define the rebuildPieChart function
+      function rebuildPieChart(data) {
+        // Call the function to update the pie chart with the filtered data
+        updatePieChart(data);
+      }
+
+      function buildPieChart(jsonData) {
+        // Extract unique years from the dataset
+        const years = [...new Set(jsonData.map((d) => d.Year))];
+
+        // Append checkboxes for each year inside the SVG
+        svg
+          .append("foreignObject")
+          .attr("x", width - margin.right - 1150)
+          .attr("y", -margin.top - 200)
+          .attr("width", 150)
+          .attr("height", 30)
+          .html(() => {
+            const yearsHTML = years
+              .map(
+                (year) =>
+                  `<label><input type="checkbox" class="year-filter" value="${year}" checked>${year}</label>`
+              )
+              .join("");
+            return `<div xmlns="http://www.w3.org/1999/xhtml">${yearsHTML}</div>`;
+          });
+
+        // Handle checkbox change event
+        d3.selectAll(".year-filter").on("change", function () {
+          const selectedYears = [];
+          d3.selectAll(".year-filter:checked").each(function () {
+            selectedYears.push(this.value);
+          });
+
+          // Filter data based on selected years
+          const filteredData = filterDataByYear(jsonData, selectedYears);
+
+          // Rebuild pie chart with filtered data
+          rebuildPieChart(filteredData);
+        });
+
+        updatePieChart(jsonData);
+      }
+
+      // Function to filter data based on selected years
+      function filterDataByYear(data, selectedYears) {
+        return data.filter((d) => selectedYears.includes(d.Year.toString()));
+      }
+    </script>
+  </body>
+</html>

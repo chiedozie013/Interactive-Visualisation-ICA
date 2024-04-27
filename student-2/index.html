@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="description" content="L3 - Colour picker " />
+    <title>Bar Chart of Units Sold by Product</title>
+    <script src="https://d3js.org/d3.v7.min.js" charset="utf-8"></script>
+
+    <!-- CSS styles -->
+    <style>
+      .checkbox-container {
+        position: absolute;
+        top: 25px;
+        left: 100px; /* Adjusted left position */
+      }
+      #select-year {
+        position: absolute;
+        top: 5px;
+        left: 100px; /* Adjusted left position */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chart-container" style="position: relative">
+      <!-- Checkbox container -->
+      <div id="select-year">Select Year</div>
+      <!-- Checkbox container -->
+      <div class="checkbox-container">
+        <input type="checkbox" id="year2020" checked /> 2020
+        <input type="checkbox" id="year2021" checked /> 2021
+      </div>
+    </div>
+
+    <script>
+      // SVG size
+      const width = 750;
+      const height = 700;
+
+      // Margins
+      const lmargin = 100;
+      const bmargin = 150;
+      const tmargin = 100;
+      const rmargin = 50;
+
+      // The actual chart size within the SVG area.
+      const graphWidth = width - lmargin - rmargin;
+      const graphHeight = height - tmargin - bmargin;
+
+      // Load data and call buildbarchart function
+      d3.json("Adidas_Product_VS_Unit_sold_with_years.json").then(
+        buildbarchart
+      );
+
+      // Color scale based on product
+      const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+      // Function to build the bar chart
+      function buildbarchart(jsonData) {
+        // Calculate total units sold
+        const totalUnitsSold = d3.sum(jsonData, (d) => d.Units_Sold);
+
+        // Sort the data in descending order based on Units_Sold
+        jsonData.sort((a, b) => b.Units_Sold - a.Units_Sold);
+
+        // Create SVG element
+        const svg = d3
+          .select("body")
+          .append("svg")
+          .attr("width", width)
+          .attr("height", height)
+          .style("background", "WhiteSmoke");
+
+        // Find the maximum y value in the dataset
+        const maxY = d3.max(
+          jsonData.map(function (d) {
+            return d.Units_Sold;
+          })
+        );
+
+        // From the data extract the product names and place into an array
+        const catX = jsonData.map(function (d) {
+          return d.Product;
+        });
+
+        // Create x-axis scale
+        const xScale = d3
+          .scaleBand()
+          .domain(catX)
+          .range([0, graphWidth])
+          .padding(0.1);
+
+        // Create a y-scale
+        const yScale = d3
+          .scaleLinear()
+          .domain([0, maxY])
+          .range([graphHeight, 0])
+          .nice();
+
+        // Create a group to contain the whole graph
+        const plotArea = svg
+          .append("g")
+          .attr("transform", `translate(${lmargin},${tmargin})`);
+
+        // Add y-axis
+        const yAxis = d3.axisLeft().scale(yScale);
+        const yAxisGroup = plotArea.append("g").call(yAxis);
+
+        // Add y-axis label
+        yAxisGroup
+          .append("text")
+          .text("Units Sold")
+          .attr(
+            "transform",
+            `translate(${-40}, ${yScale(maxY / 2)}) rotate(270)`
+          )
+          .style("fill", "black")
+          .attr("font-size", 17)
+          .attr("font-weight", "bold")
+          .attr("text-anchor", "middle");
+
+        // Add x-axis
+        const xAxis = d3.axisBottom(xScale);
+        const xAxisgroup = plotArea
+          .append("g")
+          .attr("transform", `translate(0,${graphHeight})`)
+          .call(xAxis)
+          .selectAll("text")
+          .style("text-anchor", "end")
+          .attr("dx", "-.8em")
+          .attr("dy", ".15em")
+          .attr("transform", "rotate(-30)")
+          .attr("font-size", 12);
+
+        // Add x-axis label
+        plotArea
+          .append("text")
+          .attr("x", graphWidth / 2)
+          .attr("y", graphHeight + 120)
+          .text("Product")
+          .style("fill", "black")
+          .attr("font-size", 17)
+          .attr("font-weight", "bold")
+          .attr("text-anchor", "middle");
+
+        // Function to update bars
+        function updateBars() {
+          plotArea.selectAll("rect").remove(); // Clear previous bars
+
+          // Get checked years
+          const checkedYears = [];
+          if (document.getElementById("year2020").checked)
+            checkedYears.push(2020);
+          if (document.getElementById("year2021").checked)
+            checkedYears.push(2021);
+
+          if (checkedYears.length === 0) return; // If no years selected, do nothing
+
+          // Filter data by selected years
+          const filteredData = jsonData.filter((d) =>
+            checkedYears.includes(d.Year)
+          );
+
+          // Add bars
+          const bars = plotArea
+            .selectAll("rect")
+            .data(filteredData)
+            .enter()
+            .append("rect")
+            .attr("x", function (d) {
+              return xScale(d.Product);
+            })
+            .attr("y", graphHeight)
+            .attr("width", xScale.bandwidth())
+            .attr("height", 0)
+            .style("fill", function (d) {
+              return colorScale(d.Product);
+            })
+            .on("mouseover", function (event, d) {
+              // Tooltip
+              const unitsSold = d3.sum(
+                filteredData.filter((item) => item.Product === d.Product),
+                (d) => d.Units_Sold
+              );
+              tooltip
+                .style("visibility", "visible")
+                .html(
+                  `Product: ${
+                    d.Product
+                  }<br>Units Sold: ${unitsSold}<br>Percentage: ${(
+                    (unitsSold / totalUnitsSold) *
+                    100
+                  ).toFixed(2)}%`
+                );
+            })
+            .on("mousemove", function (event) {
+              tooltip
+                .style("top", event.pageY - 10 + "px")
+                .style("left", event.pageX + 10 + "px");
+            })
+            .on("mouseout", function () {
+              tooltip.style("visibility", "hidden");
+            });
+
+          // Animate bars
+          bars
+            .transition()
+            .duration(1000)
+            .delay(function (d, i) {
+              return i * 30;
+            })
+            .attr("y", function (d) {
+              return yScale(d.Units_Sold);
+            })
+            .attr("height", function (d) {
+              return graphHeight - yScale(d.Units_Sold);
+            })
+            .ease(d3.easeCubic);
+        }
+
+        updateBars(); // Initially show data for selected years
+
+        // Toggle bars when checkboxes are clicked
+        d3.selectAll("input[type=checkbox]").on("change", function () {
+          updateBars();
+        });
+
+        // Add tooltip
+        const tooltip = d3
+          .select("body")
+          .append("div")
+          .attr("class", "tooltip")
+          .style("position", "absolute")
+          .style("background-color", "white")
+          .style("border", "1px solid #ddd")
+          .style("border-radius", "4px")
+          .style("padding", "10px")
+          .style("visibility", "hidden");
+
+        // Add title
+        plotArea
+          .append("text")
+          .attr("x", graphWidth / 2)
+          .attr("y", -20)
+          .text("Units Sold by Product")
+          .style("fill", "black")
+          .attr("font-size", 25)
+          .attr("font-weight", "bold")
+          .attr("text-anchor", "middle");
+
+        // Add note
+        svg
+          .append("text")
+          .attr("x", 10)
+          .attr("y", height - 10)
+          .text("Note: Hover over each bar for further details.")
+          .attr("font-size", 14)
+          .attr("font-weight", "bold")
+          .attr("fill", "gray");
+      }
+    </script>
+  </body>
+</html>
