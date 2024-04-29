@@ -1,148 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Treemap Example with Interactivity</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        /* Add some basic styling */
-        body {
-            font-family: Arial, sans-serif;
-        }
-        rect {
-            stroke: white;
-            cursor: pointer;
-        }
-        .tooltip {
-            position: absolute;
-            padding: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            border-radius: 5px;
-            pointer-events: none;
-            visibility: hidden; /* Initially hidden */
-        }
-        .highlighted {
-            opacity: 0.7; /* Reduced opacity for non-hovered rectangles */
-        }
-        .sales-heading {
-            text-align: center;
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
+      /* Add some basic styling */
+      body {
+        font-family: Arial, sans-serif;
+      }
+      #student-details {
+        border: 1px solid black;
+        padding: 3px;
+        background-color: antiquewhite;
+      }
+      rect {
+        stroke: white;
+        cursor: pointer;
+      }
+      .tooltip {
+        position: absolute;
+        padding: 10px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        border-radius: 5px;
+        pointer-events: none;
+        visibility: hidden; /* Initially hidden */
+      }
+      .highlighted {
+        opacity: 0.7; /* Reduced opacity for non-hovered rectangles */
+      }
+      .sales-heading {
+        text-align: center;
+        font-weight: bold;
+        font-size: 18px;
+        margin-bottom: 20px;
+      }
     </style>
-</head>
-<body>
-    
+  </head>
+  <body>
+    <section id="student-details">
+      <p>Name:- Ali, Zahro Student ID:- T7037116</p>
+    </section>
+    <nav><a href="/">Back</a></nav>
+
     <svg id="chart"></svg>
 
     <div class="tooltip"></div>
 
     <script>
-        const margin = { top: 50, right: 30, bottom: 30, left: 40 };
-        const width = 800 - margin.left - margin.right;
-        const height = 600 - margin.top - margin.bottom;
+      const margin = { top: 50, right: 30, bottom: 30, left: 40 };
+      const width = 800 - margin.left - margin.right;
+      const height = 600 - margin.top - margin.bottom;
 
-        // Load data from convertcsv.json
-        d3.json("TREEMAPNEWDATA.json").then(data => {
-            // Convert string to number for Total_Sales
-            data.forEach(d => {
-                d.Total_Sales = +d.Total_Sales;
-            });
-
-            // Group data by Sales_Method and sum Total_Sales
-            const groupedData = d3.rollup(data, 
-                v => d3.sum(v, d => d.Total_Sales),
-                d => d.Sales_Method
-            );
-
-            // Convert grouped data to hierarchical structure
-            const root = d3.hierarchy({ children: Array.from(groupedData, ([key, value]) => ({ key, value })) })
-                .sum(d => d.value)
-                .sort((a, b) => b.value - a.value);
-
-            // Create treemap layout
-            const treemap = d3.treemap()
-                .size([width, height]) // Adjusted width and height
-                .paddingInner(5)
-                .paddingOuter(5);
-
-            // Compute treemap layout
-            treemap(root);
-
-            // Create SVG element
-            const svg = d3.select("#chart")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
-
-            // Add title to the SVG
-            svg.append("text")
-                .attr("x", width / 2)
-                .attr("y", -margin.top / 2)
-                .attr("text-anchor", "middle")
-                .attr("font-size", "24px")
-                .attr("font-weight", "bold")
-                .text("Sales Method Treemap");
-
-            // Add groups for each leaf node
-            const leaf = svg.selectAll("g")
-                .data(root.leaves())
-                .enter().append("g")
-                .attr("transform", d => `translate(${d.x0},${d.y0})`)
-                .on("mouseover", handleMouseOver)
-                .on("mouseout", handleMouseOut);
-
-            // Add rectangles to groups
-            leaf.append("rect")
-                .attr("width", d => d.x1 - d.x0)
-                .attr("height", d => d.y1 - d.y0)
-                .attr("fill", d => {
-                    if (d.data.key === "In-store") return "blue";
-                    if (d.data.key === "Outlet") return "green";
-                    if (d.data.key === "Online") return "red";
-                })
-                .attr("class", "treemap-rect");
-
-            // Add text labels to groups
-            leaf.append("text")
-                .attr("x", 5)
-                .attr("y", 20)
-                .attr("font-size", "12px")
-                .attr("fill", "white")
-                .text(d => `${d.data.key} `);
-
-            // Tooltip
-            const tooltip = d3.select(".tooltip");
-
-            function handleMouseOver(event, d) {
-                const currentSlice = d3.select(this);
-                const others = svg.selectAll(".treemap-rect").filter((e) => e !== d);
-
-                // Reduce opacity of other slices
-                others.style("opacity", 0.5);
-
-                // Highlight current slice
-                currentSlice.style("opacity", 1);
-
-                // Show tooltip
-                tooltip.style("visibility", "visible")
-                    .html(`<strong>${d.data.key}</strong><br>Total Sales: $${d.value.toFixed(2)}`)
-                    .style("left", (event.pageX + 10) + "px")
-                    .style("top", (event.pageY - 20) + "px");
-            }
-
-            function handleMouseOut() {
-                // Restore opacity of all slices
-                svg.selectAll(".treemap-rect").style("opacity", 1);
-
-                // Hide tooltip
-                tooltip.style("visibility", "hidden");
-            }
+      // Load data from convertcsv.json
+      d3.json("TREEMAPNEWDATA.json").then((data) => {
+        // Convert string to number for Total_Sales
+        data.forEach((d) => {
+          d.Total_Sales = +d.Total_Sales;
         });
+
+        // Group data by Sales_Method and sum Total_Sales
+        const groupedData = d3.rollup(
+          data,
+          (v) => d3.sum(v, (d) => d.Total_Sales),
+          (d) => d.Sales_Method
+        );
+
+        // Convert grouped data to hierarchical structure
+        const root = d3
+          .hierarchy({
+            children: Array.from(groupedData, ([key, value]) => ({
+              key,
+              value,
+            })),
+          })
+          .sum((d) => d.value)
+          .sort((a, b) => b.value - a.value);
+
+        // Create treemap layout
+        const treemap = d3
+          .treemap()
+          .size([width, height]) // Adjusted width and height
+          .paddingInner(5)
+          .paddingOuter(5);
+
+        // Compute treemap layout
+        treemap(root);
+
+        // Create SVG element
+        const svg = d3
+          .select("#chart")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Add title to the SVG
+        svg
+          .append("text")
+          .attr("x", width / 2)
+          .attr("y", -margin.top / 2)
+          .attr("text-anchor", "middle")
+          .attr("font-size", "24px")
+          .attr("font-weight", "bold")
+          .text("Sales Method Treemap");
+
+        // Add groups for each leaf node
+        const leaf = svg
+          .selectAll("g")
+          .data(root.leaves())
+          .enter()
+          .append("g")
+          .attr("transform", (d) => `translate(${d.x0},${d.y0})`)
+          .on("mouseover", handleMouseOver)
+          .on("mouseout", handleMouseOut);
+
+        // Add rectangles to groups
+        leaf
+          .append("rect")
+          .attr("width", (d) => d.x1 - d.x0)
+          .attr("height", (d) => d.y1 - d.y0)
+          .attr("fill", (d) => {
+            if (d.data.key === "In-store") return "blue";
+            if (d.data.key === "Outlet") return "green";
+            if (d.data.key === "Online") return "red";
+          })
+          .attr("class", "treemap-rect");
+
+        // Add text labels to groups
+        leaf
+          .append("text")
+          .attr("x", 5)
+          .attr("y", 20)
+          .attr("font-size", "12px")
+          .attr("fill", "white")
+          .text((d) => `${d.data.key} `);
+
+        // Tooltip
+        const tooltip = d3.select(".tooltip");
+
+        function handleMouseOver(event, d) {
+          const currentSlice = d3.select(this);
+          const others = svg.selectAll(".treemap-rect").filter((e) => e !== d);
+
+          // Reduce opacity of other slices
+          others.style("opacity", 0.5);
+
+          // Highlight current slice
+          currentSlice.style("opacity", 1);
+
+          // Show tooltip
+          tooltip
+            .style("visibility", "visible")
+            .html(
+              `<strong>${
+                d.data.key
+              }</strong><br>Total Sales: $${d.value.toFixed(2)}`
+            )
+            .style("left", event.pageX + 10 + "px")
+            .style("top", event.pageY - 20 + "px");
+        }
+
+        function handleMouseOut() {
+          // Restore opacity of all slices
+          svg.selectAll(".treemap-rect").style("opacity", 1);
+
+          // Hide tooltip
+          tooltip.style("visibility", "hidden");
+        }
+      });
     </script>
-</body>
+  </body>
 </html>

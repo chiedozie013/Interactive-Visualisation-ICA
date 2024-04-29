@@ -2,118 +2,19 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>ICA Team X</title>
+    <title>ICA Team Project</title>
+    <link rel="stylesheet" href="styles.css" />
     <script src="https://d3js.org/d3.v7.min.js" charset="utf-8"></script>
   </head>
   <body>
-    <style>
-      #school_logo {
-        width: 220px;
-      }
-      #adidas_logo {
-        width: 180px;
-      }
-      #logo {
-        display: flex;
-        justify-content: space-between;
-        padding: 0 50px;
-      }
-      #description {
-        width: 60%;
-        margin: 0 auto;
-        margin-top: -80px;
-      }
-      #title {
-        font-size: 42px;
-        text-align: center;
-        margin-bottom: -40px;
-      }
-      #text {
-        text-align: center;
-        font-size: 20px;
-      }
-      #team-members {
-        width: 70%;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      #team-members h2 {
-        font-size: 32px;
-      }
-      #members-container {
-        display: flex;
-        gap: 20px;
-      }
-      .member-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      .img-container {
-        width: 180px;
-        height: 180px;
-        border-radius: 20px;
-      }
-
-      .img-container img {
-        max-width: 100%;
-        max-height: 100%;
-        display: block;
-        margin: 0 auto;
-        border-radius: 10px; /* Optional: Center the image horizontally */
-      }
-      .member-info h4 {
-        font-size: 20px;
-        margin-top: -3px;
-      }
-      .member-info p {
-        font-size: 18px;
-        margin-top: -23px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      .members-link {
-        text-decoration: none;
-        color: black;
-      }
-    </style>
-
     <section id="logo">
-      <img id="school_logo" src="./default-logo.png" alt="school logo" />
-      <img id="adidas_logo" src="./adidas_logo.png" alt="adidas logo" />
+      <img id="school_logo" src="./images/logo.png" alt="school logo" />
+      <img id="adidas_logo" src="./images/adidas_logo.png" alt="adidas logo" />
     </section>
-    <!-- <nav>
-      <ol>
-        <li>
-          <a href="student-1"
-            >Student 1:- Name: James, Chiedozie James Student ID: d3458961</a
-          >
-        </li>
-        <li>
-          <a href="student-2"
-            >Student 2:- Name: Ogundeji. Ridwan Student ID: d</a
-          >
-        </li>
-        <li>
-          <a href="student-3">Student 3:- Name: Ali, Zahro Student ID: d</a>
-        </li>
-        <li>
-          <a href="student-4">Student 4:- Name: Chede, Edward Student ID: d</a>
-        </li>
-        <li>
-          <a href="student-2"
-            >Student 5:- Name: Ezeamaka, Joseph Student ID: d</a
-          >
-        </li>
-      </ol>
-    </nav> -->
-
     <section id="description">
       <div id="title">
-        <h1>Adidas Sales Dataset</h1>
+        <h1>Exploring Adidas Sales Trends:</h1>
+        <h4>A Visual Analysis with D3.js</h4>
       </div>
       <div id="text">
         <p>
@@ -123,13 +24,34 @@
           revenue, the location of the sales, the type of product sold,
           Operating Profit, Sales Method and any other relevant information.
         </p>
+        <p>Visualizations were generated to examine the Adidas sales dataset</p>
+        <ul id="diff-charts">
+          <a href="student-1" class="members-link"
+            ><li>
+              Donut chart illustrating operating profit across all regions
+            </li></a
+          >
+          <a href="student-2" class="members-link"
+            ><li>
+              Bar chart showing cumulative unit sales for all products
+            </li></a
+          >
+          <a href="student-3" class="members-link"
+            ><li>Line chart depicting sales trends over time</li></a
+          >
+          <a href="student-4" class="members-link"
+            ><li>
+              Treemap showcasing total sales across various sales methods.
+            </li></a
+          >
+        </ul>
         <p>
-          Adidas sales data can be useful for a variety of purposes, such as
-          analyzing sales trends over specific duration, identifying successful
-          products or marketing campaigns, analyzing profit for various regions
-          and developing strategies for future sales. It can also be used to
-          compare Adidas sales to those of competitors, or to analyze the
-          effectiveness of different marketing or sales channels.
+          This analysis serves to dissect sales trends within defined
+          timeframes, pinpoint successful products or marketing endeavors,
+          scrutinize profits across diverse regions, and devise strategies for
+          future sales endeavors. Additionally, it enables comparisons between
+          Adidas sales and those of competitors, as well as assessments of the
+          efficacy of various marketing or sales channels.
         </p>
       </div>
     </section>
@@ -139,7 +61,7 @@
         <a href="student-1" class="members-link">
           <div class="member-card">
             <div class="img-container">
-              <img src="./my-photo.jpeg" alt="James photo" />
+              <img src="./images/my-photo.jpeg" alt="James photo" />
             </div>
             <div class="member-info">
               <h4>James, Chiedozie</h4>
@@ -147,6 +69,7 @@
             </div>
           </div>
         </a>
+
         <a href="student-2" class="members-link">
           <div class="member-card">
             <div class="img-container">
