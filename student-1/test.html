@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Donut Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js" charset="utf-8"></script>
+  </head>
+
+  <body>
+    <svg id="chart"></svg>
+    <script>
+      const margin = { top: 50, right: 30, bottom: 30, left: 40 };
+      const width = 800;
+      const height = 600;
+      const radius = Math.min(width, height) / 2;
+
+      // Create SVG
+      const svg = d3
+        .select("#chart") // Select the existing SVG element by its ID
+        .attr("width", width)
+        .attr("height", height)
+        .style("border", "1px solid black")
+        .style("padding-right", "50px")
+        .append("g")
+        .attr("transform", `translate(${width / 2},${height / 2})`);
+
+      let jsonData; // Variable to store the original data
+      let statePieData; // Variable to store state pie data
+
+      // Define the updatePieChart function
+      function updatePieChart(data) {
+        // Remove existing chart elements
+        svg.selectAll(".slice").remove();
+        svg.selectAll(".legend").remove();
+        svg.selectAll(".tooltip").remove();
+        svg.selectAll(".no-data-text").remove();
+        svg.selectAll(".state-slice").remove(); // Remove existing state chart elements
+        svg.selectAll(".state-text").remove();
+        svg.selectAll(".tooltip2").remove();
+
+        if (data.length === 0) {
+          // Add animation delay before showing "No data received" text
+          setTimeout(() => {
+            svg
+              .append("text")
+              .attr("class", "no-data-text")
+              .attr("x", 0)
+              .attr("y", 0)
+              .attr("text-anchor", "middle")
+              .attr("dominant-baseline", "middle")
+              .style("font-size", "32px")
+              .text("No data received");
+          }, 1500); // Adjust the delay time here (in milliseconds)
+          return;
+        }
+
+        // Aggregate data by region
+        const aggregatedData = d3.rollup(
+          data,
+          (v) => d3.sum(v, (d) => d["Operating Profit"]),
+          (d) => d.Region
+        );
+
+        // Convert aggregated data to array of objects
+        const pieData = Array.from(aggregatedData, ([key, value]) => ({
+          region: key,
+          profit: value,
+        }));
+
+        // Define pie generator
+        const pie = d3
+          .pie()
+          .value((d) => d.profit)
+          .sort(null);
+
+        // Define arc generator
+        const arc = d3
+          .arc()
+          .innerRadius(radius * 0.5)
+          .outerRadius(radius * 0.8);
+
+        // Create pie chart slices
+        const slices = svg
+          .selectAll(".slice")
+          .data(pie(pieData))
+          .enter()
+          .append("g")
+          .attr("class", "slice")
+          .on("click", handleClick); // Add click event handler
+
+        // Append paths for slices
+        slices
+          .append("path")
+          .attr("d", arc)
+          .attr("fill", (d, i) => d3.schemeCategory10[i])
+          .style("opacity", 1) // Initially set opacity to 1 for all slices
+          .transition()
+          .duration(500) // Transition duration
+          .delay((d, i) => i * 500) // Delay based on index
+          .attrTween("d", function (d) {
+            var interpolate = d3.interpolate(d.startAngle, d.endAngle);
+            return function (t) {
+              d.endAngle = interpolate(t);
+              return arc(d);
+            };
+          });
+
+        // Add title
+        svg
+          .append("text")
+          .attr("x", width / 40)
+          .attr("y", -margin.top * 5.3)
+          .attr("text-anchor", "middle")
+          .style("font-size", "32px")
+          .text("Operating Profit For All Regions")
+          .style("fill", "orange");
+
+        // Create legend
+        const legend = svg
+          .append("g")
+          .attr("class", "legend")
+          .attr(
+            "transform",
+            `translate(${width / 150 + radius + 1},${height / 4 - radius})`
+          );
+
+        // Append legend items
+        const legendItems = legend
+          .selectAll(".legend-item")
+          .data(pieData)
+          .enter()
+          .append("g")
+          .attr("class", "legend-item")
+          .attr("transform", (d, i) => `translate(0, ${i * 20})`);
+
+        legendItems
+          .append("circle")
+          .attr("cx", 0)
+          .attr("cy", 0)
+          .attr("r", 5)
+          .attr("fill", (d, i) => d3.schemeCategory10[i]);
+
+        legendItems
+          .append("text")
+          .attr("x", 20)
+          .attr("y", 0)
+          .attr("dy", ".35em")
+          .style("text-anchor", "start")
+          .text((d) => d.region)
+          .style("fill", (d, i) => d3.schemeCategory10[i]);
+
+        // Append button inside the SVG
+        const backButton = svg
+          .append("foreignObject")
+          .attr("x", 200)
+          .attr("y", -240)
+          .attr("width", 150)
+          .attr("height", 30)
+          .html(`<button id="backButton">Back to Region Chart</button>`);
+
+        // Append event listener for the back button
+        backButton.on("click", rebuildDonutChart);
+        slices.on("mouseover", showTooltip).on("mouseout", hideTooltip);
+
+        function handleClick(event, d) {
+          const currentState = d.data.region;
+          const stateData = data.filter((d) => d.Region === currentState);
+
+          // Remove existing chart elements
+          svg.selectAll(".slice").remove();
+          svg.selectAll(".legend").remove();
+          svg.selectAll(".tooltip").remove();
+          svg.selectAll(".no-data-text").remove();
+          svg.selectAll(".state-text").remove();
+          svg.selectAll(".tooltip2").remove();
+          tooltip.style("visibility", "hidden"); // Hide tooltip
+
+          // Aggregate data by state
+          const aggregatedStateData = d3.rollup(
+            stateData,
+            (v) => d3.sum(v, (d) => d["Operating Profit"]),
+            (d) => d.State
+          );
+
+          // Convert aggregated state data to array of objects
+          statePieData = Array.from(aggregatedStateData, ([key, value]) => ({
+            state: key,
+            profit: value,
+          }));
+
+          // Define pie generator for state chart
+          const statePie = d3
+            .pie()
+            .value((d) => d.profit)
+            .sort(null);
+
+          // Define arc generator for state chart
+          const stateArc = d3
+            .arc()
+            .innerRadius(radius * 0.5)
+            .outerRadius(radius * 0.8);
+
+          // Create pie chart slices for states
+          const stateSlices = svg
+            .selectAll(".state-slice")
+            .data(statePie(statePieData))
+            .enter()
+            .append("g")
+            .attr("class", "state-slice")
+            .attr("transform", `translate(${width / 60},${height / 22})`);
+
+          // Append paths for state slices
+          stateSlices
+            .append("path")
+            .attr("d", stateArc)
+            .attr("fill", (d, i) => d3.schemeCategory10[i]);
+
+          // Add state labels
+          stateSlices
+            .append("text")
+            .attr("transform", (d) => `translate(${stateArc.centroid(d)})`)
+            .attr("dy", "0.35em")
+            .attr("text-anchor", "middle")
+            .text((d) => d.data.state)
+            .style("fill", "white");
+
+          // Add title for the state chart
+          svg
+            .append("text")
+            .attr("x", width / 40)
+            .attr("y", -margin.top * 4.5)
+            .attr("text-anchor", "middle")
+            .attr("class", "state-text")
+            .style("font-size", "20px")
+            .text(`Operating Profit For ${currentState} States`)
+            .style("fill", "orange");
+
+          // Show the back button
+          backButton.style("display", "block");
+
+          // Attach event listeners to state slices to show and hide tooltips
+          stateSlices
+            .on("mouseover", showTooltipState)
+            .on("mouseout", hideTooltipState);
+        }
+
+        // Create tooltip for region
+        const tooltip = d3
+          .select("body")
+          .append("div")
+          .attr("class", "tooltip")
+          .style("position", "absolute")
+          .style("visibility", "hidden")
+          .style("background-color", "#e0e0e0")
+          .style("padding", "20px")
+          .style("border", "1px solid #ddd")
+          .style("border-radius", "5px");
+
+        // Tooltip functions for region
+        function showTooltip(event, d) {
+          const currentSlice = d3.select(this);
+          const others = svg.selectAll(".slice").filter((e) => e !== d);
+
+          // Reduce opacity of other slices
+          others.style("opacity", 0.5);
+
+          // Highlight current slice
+          currentSlice.style("opacity", 1);
+
+          // Show tooltip
+          const percentage =
+            ((d.data.profit / d3.sum(pieData, (d) => d.profit)) * 100).toFixed(
+              2
+            ) + "%";
+          const totalAmount = "$" + d.data.profit.toLocaleString();
+          tooltip
+            .html(
+              `<strong>${d.data.region} Region</strong><br>Percentage: ${percentage}<br>Total Amount: ${totalAmount}`
+            )
+            .style("top", event.pageY + "px")
+            .style("left", event.pageX + "px")
+            .style("visibility", "visible");
+        }
+
+        function hideTooltip() {
+          // Restore opacity of all slices
+          svg.selectAll(".slice").style("opacity", 1);
+
+          // Hide tooltip
+          tooltip.style("visibility", "hidden");
+        }
+
+        // Create tooltip for state slices
+        const tooltipState = d3
+          .select("body")
+          .append("div")
+          .attr("class", "tooltip")
+          .style("position", "absolute")
+          .style("visibility", "hidden")
+          .style("background-color", "#e0e0e0")
+          .style("padding", "20px")
+          .style("border", "1px solid #ddd")
+          .style("border-radius", "5px");
+
+        // Tooltip functions for state slices
+        function showTooltipState(event, d) {
+          const currentStateSlice = d3.select(this);
+          const others = svg.selectAll(".state-slice").filter((e) => e !== d);
+
+          // Reduce opacity of other slices
+          others.style("opacity", 0.5);
+
+          // Highlight current state slice
+          currentStateSlice.style("opacity", 1);
+
+          // Show tooltip
+          const percentageState =
+            (
+              (d.data.profit / d3.sum(statePieData, (d) => d.profit)) *
+              100
+            ).toFixed(2) + "%";
+          const totalAmountState = "$" + d.data.profit.toLocaleString();
+          tooltipState
+            .html(
+              `<strong>${d.data.state} State</strong><br>Percentage: ${percentageState}<br>Total Amount: ${totalAmountState}`
+            )
+            .style("top", event.pageY + "px")
+            .style("left", event.pageX + "px")
+            .style("visibility", "visible");
+        }
+
+        function hideTooltipState() {
+          // Restore opacity of all state slices
+          svg.selectAll(".state-slice").style("opacity", 1);
+
+          // Hide tooltip
+          tooltipState.style("visibility", "hidden");
+        }
+      }
+
+      // Define the rebuildDonutChart function
+      function rebuildDonutChart() {
+        // Rebuild the pie chart with the original data
+        updatePieChart(jsonData);
+      }
+
+      // Define the buildPieChart function
+      function buildPieChart(jsonData) {
+        // Extract unique years from the dataset
+        const years = [...new Set(jsonData.map((d) => d.Year))];
+
+        // Append checkboxes for each year inside the SVG
+        svg
+          .append("foreignObject")
+          .attr("x", width - margin.right - 1150)
+          .attr("y", -margin.top - 200)
+          .attr("width", 150)
+          .attr("height", 30)
+          .html(() => {
+            const yearsHTML = years
+              .map(
+                (year) =>
+                  `<label><input type="checkbox" class="year-filter" value="${year}" checked>${year}</label>`
+              )
+              .join("");
+            return `<div xmlns="http://www.w3.org/1999/xhtml">${yearsHTML}</div>`;
+          });
+
+        // Handle checkbox change event
+        d3.selectAll(".year-filter").on("change", function () {
+          const selectedYears = [];
+          d3.selectAll(".year-filter:checked").each(function () {
+            selectedYears.push(this.value);
+          });
+
+          // Filter data based on selected years
+          const filteredData = filterDataByYear(jsonData, selectedYears);
+
+          // Rebuild pie chart with filtered data
+          updatePieChart(filteredData);
+        });
+
+        // Initial pie chart
+        updatePieChart(jsonData);
+      }
+
+      // Function to filter data based on selected years
+      function filterDataByYear(data, selectedYears) {
+        return data.filter((d) => selectedYears.includes(d.Year.toString()));
+      }
+
+      d3.json("donutchart1.json")
+        .then(function (data) {
+          jsonData = data; // Store the original data
+          buildPieChart(data); // Build the initial pie chart
+        })
+        .catch(function (error) {
+          d3.select(".error")
+            .style("visibility", "visible")
+            .text("There was an error fetching the data");
+        });
+    </script>
+  </body>
+</html>
