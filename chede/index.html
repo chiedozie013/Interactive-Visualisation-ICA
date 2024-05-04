@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D3.js Horizontal Bar Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: rgb(254, 251, 255);
+        font-family: Arial, sans-serif;
+      }
+      #student-details {
+        border: 1px solid black;
+        padding: 3px;
+        background-color: antiquewhite;
+      }
+      .chart-background {
+        fill: #cdf7cfde; /* Background color */
+      }
+
+      .legend-item {
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      .legend-item:hover {
+        font-weight: bold;
+      }
+
+      .tooltip {
+        position: absolute;
+        background-color: rgba(48, 45, 45, 0.7);
+        color: white;
+        padding: 5px;
+        border-radius: 5px;
+        pointer-events: none;
+        display: none; /* Hide initially */
+      }
+
+      .legend {
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <section id="student-details">
+      <p>Name:- Ezeamaka, Joseph Student ID:- Q2274396</p>
+    </section>
+    <nav><a href="../index.html">Back</a></nav>
+
+    <div>
+      <label for="year-select">Select Year:</label>
+      <select id="year-select">
+        <option value="all">All</option>
+      </select>
+    </div>
+    <div>
+      <button id="West">West</button>
+      <button id="Northeast">Northeast</button>
+      <button id="Southeast">Southeast</button>
+      <button id="South">South</button>
+      <button id="Midwest">Midwest</button>
+      <button id="reset">Reset</button>
+      <!-- Added reset button -->
+    </div>
+    <svg id="chart"></svg>
+
+    <div class="tooltip"></div>
+
+    <svg class="legend"></svg>
+
+    <script>
+      // Load data from JSON file
+      d3.json("tsbystate.json").then(function (data) {
+        console.log(data); // Log the loaded data to the console for debugging
+
+        // Extract unique years for dropdown filter
+        const years = ["all", ...Array.from(new Set(data.map((d) => d.Year)))];
+
+        // Populate dropdown filter
+        const dropdown = d3.select("#year-select");
+        dropdown
+          .selectAll("option")
+          .data(years)
+          .enter()
+          .append("option")
+          .attr("value", (d) => d)
+          .text((d) => (d === "all" ? "All" : d));
+
+        // Set up dimensions
+        const margin = { top: 60, right: 30, bottom: 30, left: 150 };
+        const width = 1000 - margin.left - margin.right;
+        const height = 800 - margin.top - margin.bottom;
+
+        // Define fixed color scale for regions
+        const colorScale = {
+          West: "#1f77b4",
+          Northeast: "#ff7f0e",
+          Southeast: "#2ca02c",
+          South: "#d62728",
+          Midwest: "#9467bd",
+        };
+
+        // Create SVG element
+        const svg = d3
+          .select("#chart")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Add background
+        svg
+          .append("rect")
+          .attr("class", "chart-background")
+          .attr("width", width)
+          .attr("height", height);
+
+        // Add title to the plot
+        svg
+          .append("text")
+          .attr("x", width / 2)
+          .attr("y", -margin.top / 2)
+          .attr("text-anchor", "middle")
+          .style("font-size", "20px")
+          .text("Total Sales by Region and States");
+
+        // Create scales
+        const xScale = d3.scaleLinear().range([0, width]);
+        //.padding(0.5);
+
+        const yScale = d3.scaleBand().range([0, height]).padding(0.1);
+
+        // Draw initial axes
+        svg
+          .append("g")
+          .attr("class", "x-axis")
+          .attr("transform", `translate(0,${height})`);
+
+        svg.append("g").attr("class", "y-axis");
+
+        // Function to update bars based on selected year
+        function updateBars(filteredData) {
+          // Update domains
+          xScale.domain([
+            0,
+            d3.max(filteredData, (d) => +d["Sum of Total Sales"]),
+          ]);
+          yScale.domain(filteredData.map((d) => d.State));
+
+          // Draw bars
+          const bars = svg.selectAll(".bar").data(filteredData, (d) => d.State);
+
+          // Exit
+          bars.exit().remove();
+
+          // Update existing bars
+          bars
+            .transition()
+            .duration(500)
+            .attr("y", (d) => yScale(d.State))
+            .attr("height", yScale.bandwidth())
+            .attr("width", (d) => xScale(+d["Sum of Total Sales"]))
+            .attr("x", 0)
+            .attr("fill", (d) => colorScale[d.Region]);
+
+          // Enter new bars
+          bars
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("fill", (d) => colorScale[d.Region])
+            .attr("y", (d) => yScale(d.State))
+            .attr("height", 0) // Initially set height to 0 for animation
+            .attr("width", 0)
+            .attr("x", 0)
+            .on("mouseover", function (event, d) {
+              tooltip
+                .style("left", event.pageX + 10 + "px")
+                .style("top", event.pageY - 30 + "px")
+                .html(
+                  `<strong>${d.State}</strong><br>Total Sales: ${d["Sum of Total Sales"]}<br>Region: ${d.Region}`
+                )
+                .style("display", "block");
+            })
+            .on("mouseout", function () {
+              tooltip.style("display", "none");
+            })
+            .transition()
+            .duration(500)
+            .attr("width", (d) => xScale(+d["Sum of Total Sales"])) // Animate width
+            .attr("height", yScale.bandwidth()); // Animate height
+
+          // Update x-axis
+          svg.select(".x-axis").call(d3.axisBottom(xScale));
+
+          // Update y-axis
+          svg.select(".y-axis").call(d3.axisLeft(yScale).ticks(10)); // Specify the number of ticks
+        }
+
+        // Initial call to update bars with the first year
+        updateBars(data);
+
+        // Add event listener to dropdown menu
+        dropdown.on("change", function () {
+          const selectedYear = this.value;
+          const selectedRegion = document.querySelector("button.active").id;
+          let filteredData;
+          if (selectedYear === "all" && selectedRegion === "all") {
+            filteredData = data;
+          } else if (selectedYear === "all") {
+            filteredData = data.filter((d) => d.Region === selectedRegion);
+          } else if (selectedRegion === "all") {
+            filteredData = data.filter((d) => d.Year == selectedYear);
+          } else {
+            filteredData = data.filter(
+              (d) => d.Year == selectedYear && d.Region === selectedRegion
+            );
+          }
+          updateBars(filteredData);
+        });
+
+        // Tooltip
+        const tooltip = d3.select(".tooltip");
+
+        // Legend
+        const legend = d3
+          .select(".legend")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", 50)
+          .selectAll(".legend-item")
+          .data(Object.keys(colorScale))
+          .enter()
+          .append("g")
+          .attr("class", "legend-item")
+          .attr("transform", (d, i) => `translate(${i * 80}, 0)`);
+
+        legend
+          .append("rect")
+          .attr("x", 0)
+          .attr("y", 10)
+          .attr("width", 10)
+          .attr("height", 10)
+          .attr("fill", (d) => colorScale[d]);
+
+        legend
+          .append("text")
+          .attr("x", 15)
+          .attr("y", 20)
+          .text((d) => d);
+
+        // Event listeners for region buttons
+        document.querySelectorAll("button").forEach((button) => {
+          button.addEventListener("click", function () {
+            if (this.id === "reset") {
+              // Reset button action
+              document.querySelector("#year-select").value = "all";
+              document
+                .querySelectorAll("button")
+                .forEach((btn) => btn.classList.remove("active"));
+              updateBars(data);
+            } else {
+              document
+                .querySelectorAll("button")
+                .forEach((btn) => btn.classList.remove("active"));
+              this.classList.add("active");
+              const selectedYear = document.querySelector("#year-select").value;
+              const selectedRegion = this.id;
+              let filteredData;
+              if (selectedYear === "all") {
+                filteredData = data.filter((d) => d.Region === selectedRegion);
+              } else {
+                filteredData = data.filter(
+                  (d) => d.Year == selectedYear && d.Region === selectedRegion
+                );
+              }
+              updateBars(filteredData);
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
