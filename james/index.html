@@ -161,7 +161,7 @@
           .append("path")
           .attr("d", arc)
           .attr("fill", (d, i) => d3.schemeCategory10[i])
-          .style("opacity", 1) // Initially set opacity to 1 for all slices
+          .style("opacity", 0.7) // Initially set opacity to 1 for all slices
           .transition()
           .duration(500) // Transition duration
           .delay((d, i) => i * 500) // Delay based on index
@@ -281,7 +281,8 @@
           stateSlices
             .append("path")
             .attr("d", stateArc)
-            .attr("fill", (d, i) => d3.schemeCategory10[i]);
+            .attr("fill", (d, i) => d3.schemeCategory10[i])
+            .style("opacity", 0.7);
 
           // Add state labels
           stateSlices
