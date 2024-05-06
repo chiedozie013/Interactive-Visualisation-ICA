@@ -44,6 +44,21 @@
       .lowlight {
         opacity: 0.5 !important;
       }
+      #container {
+        display: grid;
+        grid-template-columns: 1fr 2fr; /* 1:2 ratio */
+        grid-column-gap: 20px;
+      }
+      #write-up {
+        padding: 15px;
+      }
+      #write-up h2 {
+        color: green;
+      }
+      .no-data-text {
+        font-size: 48px;
+        color: brown;
+      }
     </style>
   </head>
 
@@ -52,16 +67,50 @@
       <p>Name:- Ogundeji, Ridwan Student ID:- D3000496</p>
     </section>
     <nav><a href="../index.html">Back</a></nav>
-    <section id="graph-1"></section>
-    <div id="chart-container" style="position: relative">
-      <!-- Checkbox container -->
-      <div id="select-year">Select Year</div>
-      <!-- Checkbox container -->
-      <div class="checkbox-container">
-        <input type="checkbox" id="year2020" checked /> 2020
-        <input type="checkbox" id="year2021" checked /> 2021
+    <section id="container">
+      <div id="write-up">
+        <h2>Chart Description</h2>
+        <p>
+          Chart description This bar chat was created using D3.js. It shows the
+          unit of each product sold by the organization. The chart was created
+          using three columns from the Adidas US sales dataset. The three
+          columns used are; product, invoice date and units sold. When mouse is
+          hovered on each bar,a tool tip is used to show the units sold for each
+          product as well as the percentage of this number in the overall unit
+          sold. Check boxes were also placed at the top of the chart to enable
+          users to explore the data interactively across different years.
+        </p>
+
+        <h2>Insights:</h2>
+        <ol>
+          <li>
+            Men's street footwear sells the most across the two years in the
+            dataset, with a combined unit of 593320 and accounted for 23.94% of
+            the total units sold by the organization.
+          </li>
+          <li>
+            Men's Apparel sells the least across the two years in the dataset,
+            with a combined unit of 306,683 and accounted for 12.37% of the
+            total units sold by the organization.
+          </li>
+          <li>
+            The organization sold more of Men's products (1,335,529 units)
+            compared to women's products (1,143,332 units) across the two years
+            in the dataset.
+          </li>
+        </ol>
       </div>
-    </div>
+      <div id="chart-container" style="position: relative">
+        <!-- Checkbox container -->
+        <div id="select-year">Select Year</div>
+        <!-- Checkbox container -->
+        <div class="checkbox-container">
+          <input type="checkbox" id="year2020" checked /> 2020
+          <input type="checkbox" id="year2021" checked /> 2021
+        </div>
+        <svg id="chart"></svg>
+      </div>
+    </section>
 
     <script>
       // SVG size
@@ -90,11 +139,11 @@
       function buildbarchart(jsonData) {
         // Create SVG element
         const svg = d3
-          .select("body")
-          .append("svg")
+          .select("#chart")
           .attr("width", width)
           .attr("height", height)
-          .style("background", "WhiteSmoke");
+          .style("background", "WhiteSmoke")
+          .attr("class", "chart");
 
         // Create a group to contain the whole graph
         const plotArea = svg
@@ -130,7 +179,10 @@
               filteredData.filter((item) => item.Product === d.Product),
               (d) => d.Units_Sold
             );
-            maxUnitsSold.set(d.Product, Math.max(unitsSold, maxUnitsSold.get(d.Product) || 0));
+            maxUnitsSold.set(
+              d.Product,
+              Math.max(unitsSold, maxUnitsSold.get(d.Product) || 0)
+            );
           });
 
           // Create x-axis scale
@@ -180,10 +232,14 @@
                 filteredData.filter((item) => item.Product === d.Product),
                 (d) => d.Units_Sold
               );
-              const percentage = ((unitsSold / totalUnitsSold) * 100).toFixed(2);
+              const percentage = ((unitsSold / totalUnitsSold) * 100).toFixed(
+                2
+              );
               tooltip
                 .style("visibility", "visible")
-                .html(`Product: ${d.Product}<br>Units Sold: ${unitsSold}<br>Percentage: ${percentage}%`);
+                .html(
+                  `Product: ${d.Product}<br>Units Sold: ${unitsSold}<br>Percentage: ${percentage}%`
+                );
               // Highlight current bar
               d3.select(this).classed("highlight", true);
               // Reduce opacity of other bars
@@ -207,14 +263,25 @@
             .transition()
             .duration(1000)
             .delay((d, i) => i * 30)
-            .attr("y", (d) => yScale(d3.sum(
-              filteredData.filter((item) => item.Product === d.Product),
-              (d) => d.Units_Sold
-            )))
-            .attr("height", (d) => graphHeight - yScale(d3.sum(
-              filteredData.filter((item) => item.Product === d.Product),
-              (d) => d.Units_Sold
-            )))
+            .attr("y", (d) =>
+              yScale(
+                d3.sum(
+                  filteredData.filter((item) => item.Product === d.Product),
+                  (d) => d.Units_Sold
+                )
+              )
+            )
+            .attr(
+              "height",
+              (d) =>
+                graphHeight -
+                yScale(
+                  d3.sum(
+                    filteredData.filter((item) => item.Product === d.Product),
+                    (d) => d.Units_Sold
+                  )
+                )
+            )
             .ease(d3.easeCubic);
         }
 
