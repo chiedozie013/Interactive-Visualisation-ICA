@@ -44,34 +44,66 @@
       .legend {
         font-size: 12px;
       }
+      #container {
+        display: grid;
+        grid-template-columns: 1fr 2fr; /* 1:2 ratio */
+        grid-column-gap: 20px;
+      }
+      #write-up {
+        padding: 15px;
+      }
+      #write-up h2 {
+        color: green;
+      }
     </style>
   </head>
   <body>
     <section id="student-details">
-      <p>Name:- Ezeamaka, Joseph Student ID:- Q2274396</p>
+      <p>Name:- Chede, Edward Student ID:- D3333789</p>
     </section>
     <nav><a href="../index.html">Back</a></nav>
+    <section id="container">
+      <div id="write-up">
+        <h2>Horizontal bar Chart (Column Chart)</h2>
+        <p>
+          The Horizontal bar chart was created using D3.JS and it proffer
+          insight to the Total sales by States and Regions.
+        </p>
+        <h2>Choice of use</h2>
+        <p>
+          The choice of the chart is its suitability and ease to show
+          comparison. The length of each bar directly represents the value it
+          represents, allowing for straightforward comparisons. More so with the
+          labels positioned horizontally, it's often easier to read long
+          category names or data labels without the need for rotating text,
+          which can improve readability. Horizontal bar charts can be more
+          space-efficient than vertical bar charts, especially when dealing with
+          long category names or when displaying a large number of categories
+        </p>
+      </div>
+      <div>
+        <div>
+          <label for="year-select">Select Year:</label>
+          <select id="year-select">
+            <option value="all">All</option>
+          </select>
+        </div>
+        <div>
+          <button id="West">West</button>
+          <button id="Northeast">Northeast</button>
+          <button id="Southeast">Southeast</button>
+          <button id="South">South</button>
+          <button id="Midwest">Midwest</button>
+          <button id="reset">Reset</button>
+          <!-- Added reset button -->
+        </div>
+        <svg id="chart"></svg>
 
-    <div>
-      <label for="year-select">Select Year:</label>
-      <select id="year-select">
-        <option value="all">All</option>
-      </select>
-    </div>
-    <div>
-      <button id="West">West</button>
-      <button id="Northeast">Northeast</button>
-      <button id="Southeast">Southeast</button>
-      <button id="South">South</button>
-      <button id="Midwest">Midwest</button>
-      <button id="reset">Reset</button>
-      <!-- Added reset button -->
-    </div>
-    <svg id="chart"></svg>
+        <div class="tooltip"></div>
 
-    <div class="tooltip"></div>
-
-    <svg class="legend"></svg>
+        <svg class="legend"></svg>
+      </div>
+    </section>
 
     <script>
       // Load data from JSON file

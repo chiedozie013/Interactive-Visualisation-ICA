@@ -40,12 +40,41 @@
         pointer-events: none;
         opacity: 0;
       }
+      #container {
+        display: grid;
+        grid-template-columns: 1fr 2fr; /* 1:2 ratio */
+        grid-column-gap: 10px;
+      }
+      #write-up {
+        padding: 15px;
+      }
+      #write-up h2 {
+        color: green;
+      }
     </style>
     <section id="student-details">
       <p>Name:- Ali, Zahro Student ID:- T7037116</p>
     </section>
     <nav><a href="../index.html">Back</a></nav>
-    <section id="graph-1"></section>
+    <section id="container">
+      <div id="write-up">
+        <h2>Line Chart</h2>
+        <p>
+          The Line chart was created using D3.JS and displays Total Sales over
+          time. Line charts are excellent for displaying time series, continuous
+          trend and comparing trends.
+        </p>
+        <h2>Choice of use</h2>
+        <p>
+          The line chart displays a smooth visualization of the Total sales in
+          the month of the year and also for highlights deviations from a trend.
+          Line charts can interpolate between data points, which means that even
+          if data is missing for certain time points, the chart can still
+          display a continuous trend line.
+        </p>
+      </div>
+      <svg id="chart"></svg>
+    </section>
     <script>
       // Get the data
       d3.csv("linechart.csv").then(buildLineChart);
@@ -71,8 +100,7 @@
 
         // Create SVG canvas
         const svg = d3
-          .select("body")
-          .append("svg")
+          .select("#chart")
           .attr("width", width + margin.left + margin.right)
           .attr("height", height + margin.top + margin.bottom)
           .style("border", "1px solid black")

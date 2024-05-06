@@ -41,6 +41,17 @@
         font-size: 18px;
         margin-bottom: 20px;
       }
+      #container {
+        display: grid;
+        grid-template-columns: 1fr 2fr; /* 1:2 ratio */
+        grid-column-gap: 20px;
+      }
+      #write-up {
+        padding: 15px;
+      }
+      #write-up h2 {
+        color: green;
+      }
     </style>
   </head>
   <body>
@@ -48,11 +59,26 @@
       <p>Name:- Ezeamaka, Joseph Student ID:- Q2274396</p>
     </section>
     <nav><a href="../index.html">Back</a></nav>
+    <section id="container">
+      <div id="write-up">
+        <h2>Tree map</h2>
+        <p>
+          The Tree map was created using D3.JS and displays Total Sales over
+          sales methods. At a glance, It gives a clear picture of the sales
+          method with the highest sales volume.
+        </p>
+        <h2>Choice of use</h2>
+        <p>
+          It visualizes hierarchical data structures using nested rectangles,
+          with each rectangle's size proportional to a specific value. Tree maps
+          are effective for comparing the relative sizes of different categories
+          within a dataset.
+        </p>
+      </div>
 
-    <svg id="chart"></svg>
-
-    <div class="tooltip"></div>
-
+      <svg id="chart"></svg>
+      <div class="tooltip"></div>
+    </section>
     <script>
       const margin = { top: 50, right: 30, bottom: 30, left: 40 };
       const width = 800 - margin.left - margin.right;
