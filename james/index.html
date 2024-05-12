@@ -90,6 +90,19 @@
       const width = 800;
       const height = 600;
       const radius = Math.min(width, height) / 2;
+      let jsonData; // Variable to store the original data
+      let statePieData; // Variable to store state pie data
+
+      d3.json("donutchart1.json")
+        .then(function (data) {
+          jsonData = data; // Store the original data
+          buildPieChart(data); // Build the initial pie chart
+        })
+        .catch(function (error) {
+          d3.select(".error")
+            .style("visibility", "visible")
+            .text("There was an error fetching the data");
+        });
 
       // Create SVG
       const svg = d3
@@ -100,9 +113,6 @@
         .style("padding-right", "50px")
         .append("g")
         .attr("transform", `translate(${width / 2},${height / 2})`);
-
-      let jsonData; // Variable to store the original data
-      let statePieData; // Variable to store state pie data
 
       // Define the updatePieChart function
       function updatePieChart(data) {
@@ -466,17 +476,6 @@
       function filterDataByYear(data, selectedYears) {
         return data.filter((d) => selectedYears.includes(d.Year.toString()));
       }
-
-      d3.json("donutchart1.json")
-        .then(function (data) {
-          jsonData = data; // Store the original data
-          buildPieChart(data); // Build the initial pie chart
-        })
-        .catch(function (error) {
-          d3.select(".error")
-            .style("visibility", "visible")
-            .text("There was an error fetching the data");
-        });
     </script>
   </body>
 </html>
