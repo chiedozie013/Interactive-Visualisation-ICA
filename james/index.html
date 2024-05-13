@@ -250,19 +250,7 @@
           .text((d) => d.region)
           .style("fill", (d, i) => d3.schemeCategory10[i]);
 
-        // Append button inside the SVG
-        const backButton = svg
-          .append("foreignObject")
-          .attr("x", 200)
-          .attr("y", -240)
-          .attr("width", 150)
-          .attr("height", 30)
-          .html(`<button id="backButton">Back to Region Chart</button>`);
-
-        // Append event listener for the back button
-        backButton.on("click", rebuildDonutChart);
-        slices.on("mouseover", showTooltip).on("mouseout", hideTooltip);
-
+        
         function handleClick(event, d) {
           const currentState = d.data.region;
           const stateData = data.filter((d) => d.Region === currentState);
@@ -336,6 +324,19 @@
             .style("font-size", "20px")
             .text(`Operating Profit For ${currentState} States`)
             .style("fill", "orange");
+
+          // Append button inside the SVG
+          const backButton = svg
+            .append("foreignObject")
+            .attr("x", 200)
+            .attr("y", -240)
+            .attr("width", 150)
+            .attr("height", 30)
+            .html(`<button id="backButton">Back to Region Chart</button>`);
+  
+          // Append event listener for the back button
+          backButton.on("click", rebuildDonutChart);
+          slices.on("mouseover", showTooltip).on("mouseout", hideTooltip);
 
           // Show the back button
           backButton.style("display", "block");
