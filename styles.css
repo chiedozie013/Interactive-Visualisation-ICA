@@ -78,7 +78,7 @@ ul {
   transition: transform 0.3s ease;
 }
 
-.img-container.hover{
+.img-container:hover{
   transform: scale(1.2);
 }
   
