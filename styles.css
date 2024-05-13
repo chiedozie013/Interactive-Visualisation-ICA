@@ -79,7 +79,7 @@ ul {
 }
 
 .img-container:hover{
-  transform: scale(1.2);
+  transform: scale(1.05) rotate(-5deg);
 }
   
 .img-container img {
@@ -88,7 +88,7 @@ ul {
   display: block;
   margin: 0 auto;
   border-radius: 10px; /* Optional: Center the image horizontally */
-  
+  transition: transform 0.3s ease;
 }
 .member-info h4 {
   font-size: 20px;
