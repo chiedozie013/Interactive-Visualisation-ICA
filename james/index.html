@@ -250,6 +250,7 @@
           .text((d) => d.region)
           .style("fill", (d, i) => d3.schemeCategory10[i]);
 
+        slices.on("mouseover", showTooltip).on("mouseout", hideTooltip);
         
         function handleClick(event, d) {
           const currentState = d.data.region;
