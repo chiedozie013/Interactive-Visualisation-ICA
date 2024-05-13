@@ -137,6 +137,7 @@
         svg.selectAll(".state-slice").remove(); // Remove existing state chart elements
         svg.selectAll(".state-text").remove();
         svg.selectAll(".tooltip2").remove();
+        svg.selectAll("#backButton").remove();
 
         if (data.length === 0) {
           // Add animation delay before showing "No data received" text
